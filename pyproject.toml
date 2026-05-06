@@ -1,0 +1,10 @@
+[project]
+name = "lmpeinp"
+version = "0.1.0"
+description = "Large Mammal Populations Elk Island National Park"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = []
+
+[project.scripts]
+lmpeinp = "lmpeinp.__main__:main"
