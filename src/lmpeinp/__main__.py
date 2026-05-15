@@ -70,7 +70,7 @@ def menu(con: sqlite3.Connection, cur: sqlite3.Cursor) -> None:
     prompt = ""
     while len(prompt) == 0 or prompt[0].lower() != "q":
         prompt = input(
-            "Would you like to (d)etermine population growth or (q)uit the program? ",
+            "Would you like to (d)etermine population growth, (a)dd new data to the database, or (q)uit the program? ",
         )
         if len(prompt) == 0:
             continue
@@ -78,6 +78,9 @@ def menu(con: sqlite3.Connection, cur: sqlite3.Cursor) -> None:
             case "d":
                 print()
                 growth(cur)
+            case "a":
+                print()
+                add(con, cur)
 
 
 def growth(cur: sqlite3.Cursor) -> None:
@@ -150,6 +153,138 @@ def show_year(cur: sqlite3.Cursor, year: int, species: str) -> int | None:
         print(f"Total population of {species} during {year}: {population} ({method})")
         return population
     return None
+
+
+def add(con: sqlite3.Connection, cur: sqlite3.Cursor) -> None:
+    try:
+        population_year = int(input("Population year? "))
+
+        species_name = int(input("Species of mammal (1: Bison, 2: Deer, 3: Elk, 4: Moose)? "))
+        match species_name:
+            case 1:
+                species_name = "Bison"
+            case 2:
+                species_name = "Deer"
+            case 3:
+                species_name = "Elk"
+            case 4:
+                species_name = "Moose"
+            case _:
+                raise ValueError
+
+        fall_estimate = int(input("Population estimate? "))
+        if fall_estimate < 0:
+            raise ValueError
+
+        print("For the following optional values, leave empty to skip.")
+
+        park_area = input("Area of park (1: North, 2: South? ")
+        match park_area:
+            case "1":
+                park_area = "North"
+            case "2":
+                park_area = "South"
+            case _:
+                park_area = None
+
+        survey_year = input("Survey year? ")
+        survey_year = int(survey_year) if survey_year != "" else None
+
+        survey_month = input("Survey month? ")
+        survey_month = int(survey_month) if survey_month != "" else None
+        if survey_month is not None and 1 > survey_month > 12:
+            raise ValueError
+
+        survey_day = input("Survey day? ")
+        survey_day = int(survey_day) if survey_day != "" else None
+        if survey_day is not None and 1 > survey_day > 31:
+            raise ValueError
+
+        unknown_age_count = input("Unknown age count? ")
+        unknown_age_count = int(unknown_age_count) if unknown_age_count != "" else None
+        if unknown_age_count is not None and unknown_age_count < 0:
+            raise ValueError
+
+        male_count = input("Adult male count? ")
+        male_count = int(male_count) if male_count != "" else None
+        if male_count is not None and male_count < 0:
+            raise ValueError
+
+        female_count = input("Adult female count? ")
+        female_count = int(female_count) if female_count != "" else None
+        if female_count is not None and female_count < 0:
+            raise ValueError
+
+        unknown_sex_count = input("Adult unknown sex count? ")
+        unknown_sex_count = int(unknown_sex_count) if unknown_sex_count != "" else None
+        if unknown_sex_count is not None and unknown_sex_count < 0:
+            raise ValueError
+
+        yearling_count = input("Yearling count? ")
+        yearling_count = int(yearling_count) if yearling_count != "" else None
+        if yearling_count is not None and yearling_count < 0:
+            raise ValueError
+
+        calf_count = input("Calf count? ")
+        calf_count = int(calf_count) if calf_count != "" else None
+        if calf_count is not None and calf_count < 0:
+            raise ValueError
+
+        survey_total = input("Survey total? ")
+        survey_total = int(survey_total) if survey_total != "" else None
+        if survey_total is not None and survey_total < 0:
+            raise ValueError
+
+        correction_factor = input("Sightability correction factor? ")
+        correction_factor = float(correction_factor) if correction_factor != "" else None
+        if correction_factor is not None and correction_factor < 1:
+            raise ValueError
+
+        captive_count = input("Captive count? ")
+        captive_count = int(captive_count) if captive_count != "" else None
+        if captive_count is not None and captive_count < 0:
+            raise ValueError
+
+        removed_prior = input("Animals removed prior to survey? ")
+        removed_prior = int(removed_prior) if removed_prior != "" else None
+        if removed_prior is not None and removed_prior < 0:
+            raise ValueError
+
+        survey_comment = input("Survey Comment? ")
+        if survey_comment == "":
+            survey_comment = None
+
+        estimation_method = input("Estimation method? ")
+        if estimation_method == "":
+            estimation_method = None
+    except ValueError:
+        print("Error detected in provided inputs!")
+        return
+
+    row = (
+        park_area,
+        population_year,
+        survey_year,
+        survey_month,
+        survey_day,
+        species_name,
+        unknown_age_count,
+        male_count,
+        female_count,
+        unknown_sex_count,
+        yearling_count,
+        calf_count,
+        survey_total,
+        correction_factor,
+        captive_count,
+        removed_prior,
+        fall_estimate,
+        survey_comment,
+        estimation_method,
+    )
+    cur.execute(f"INSERT INTO populations VALUES({', '.join(['?'] * 19)})", row)
+    con.commit()
+    print()
 
 
 if __name__ == "__main__":
