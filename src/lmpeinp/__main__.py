@@ -76,18 +76,21 @@ def menu(con: sqlite3.Connection, cur: sqlite3.Cursor) -> None:
     prompt = ""
     while len(prompt) == 0 or prompt[0].lower() != "q":
         prompt = input(
-            "Would you like to (d)etermine population growth, (a)dd new data to the database, or \
-(q)uit the program? ",
+            "Would you like to (s)how population growth, (a)dd new data to the database, (d)elete \
+a year's population data, or (q)uit the program? ",
         )
         if len(prompt) == 0:
             continue
         match prompt[0].lower():
-            case "d":
+            case "s":
                 print()
                 growth(cur)
             case "a":
                 print()
                 add(con, cur)
+            case "d":
+                print()
+                delete(con, cur)
 
 
 def growth(cur: sqlite3.Cursor) -> None:
@@ -158,7 +161,7 @@ WHERE population_year = ? AND species_name = ?",
             method = row[3]
 
         if row[2] is not None:
-            print(f"Survey comment for {year} in the {row[0]}: {row[2]}")
+            print(f"Survey comment for {year} in the {row[0]}: '{row[2]}'")
 
     if population != 0:
         print(f"Total population of {species} during {year}: {population} ({method})")
@@ -295,6 +298,29 @@ def add(con: sqlite3.Connection, cur: sqlite3.Cursor) -> None:
         estimation_method,
     )
     cur.execute(f"INSERT INTO populations VALUES({', '.join(['?'] * 19)})", row)
+    con.commit()
+    print()
+
+
+def delete(con: sqlite3.Connection, cur: sqlite3.Cursor) -> None:
+    """Delete a year's worth of populations from the database of the user's choice."""
+    try:
+        year = int(
+            input(
+                "Which year's worth of populations data would you like to have deleted from the \
+database? ",
+            ),
+        )
+    except ValueError:
+        print("Error detected in provided inputs!")
+        return
+    print()
+
+    cur.execute("DELETE FROM populations WHERE population_year = ?", (year,))
+    print(
+        f"Deleted {cur.rowcount} sets of populations matching population year {year} from the \
+database",
+    )
     con.commit()
     print()
 
