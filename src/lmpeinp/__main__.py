@@ -1,3 +1,5 @@
+"""Large Mammal Populations Elk Island National Park."""
+
 import csv
 import pathlib
 import sqlite3
@@ -9,6 +11,7 @@ DB_FILENAME = "populations.db"
 
 
 def main() -> None:
+    """Program's Entry point."""
     con = sqlite3.connect(DB_FILENAME)
     cur = con.cursor()
     import_csv(con, cur)
@@ -17,6 +20,7 @@ def main() -> None:
 
 
 def import_csv(con: sqlite3.Connection, cur: sqlite3.Cursor) -> None:
+    """Look for the population data CSV file, and create an appropriate SQL database using it."""
     cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='populations'")
     if cur.fetchone() is not None:
         print("Using existing database's population data...")
@@ -59,6 +63,7 @@ def import_csv(con: sqlite3.Connection, cur: sqlite3.Cursor) -> None:
 
 
 def nullify(data: str) -> str | int | None:
+    """Convert a Python value into its SQL counterpart."""
     if data in {"NA", ""}:
         return None
     if data.isdigit():
@@ -67,10 +72,12 @@ def nullify(data: str) -> str | int | None:
 
 
 def menu(con: sqlite3.Connection, cur: sqlite3.Cursor) -> None:
+    """Go through the program's main menu."""
     prompt = ""
     while len(prompt) == 0 or prompt[0].lower() != "q":
         prompt = input(
-            "Would you like to (d)etermine population growth, (a)dd new data to the database, or (q)uit the program? ",
+            "Would you like to (d)etermine population growth, (a)dd new data to the database, or \
+(q)uit the program? ",
         )
         if len(prompt) == 0:
             continue
@@ -84,6 +91,7 @@ def menu(con: sqlite3.Connection, cur: sqlite3.Cursor) -> None:
 
 
 def growth(cur: sqlite3.Cursor) -> None:
+    """Ask the user for what years and species to look for and analyze the data."""
     try:
         start_year = int(input("Starting year of period? "))
         end_year = int(input("Ending year of period? "))
@@ -91,7 +99,7 @@ def growth(cur: sqlite3.Cursor) -> None:
             raise ValueError
 
         species = int(
-            input("Mammal population to analyze (1: Bison, 2: Deer, 3: Elk, 4: Moose, 5: All)? ")
+            input("Mammal population to analyze (1: Bison, 2: Deer, 3: Elk, 4: Moose, 5: All)? "),
         )
         match species:
             case 1:
@@ -118,19 +126,22 @@ def growth(cur: sqlite3.Cursor) -> None:
         print(f"Approximate rate of change ({start_year}-{end_year}): {rate} {species}/year\n")
     else:
         print(
-            "Not enough data available to calculate rate of population change over given period!\n"
+            "Not enough data available to calculate rate of population change over given period!\n",
         )
 
 
 def show_year(cur: sqlite3.Cursor, year: int, species: str) -> int | None:
+    """Search the database for the provided data and interpret it."""
     if species == "All":
         cur.execute(
-            "SELECT park_area, fall_estimate, survey_comment, estimation_method FROM populations WHERE population_year = ? AND species_name IN ('Bison', 'Deer', 'Elk', 'Moose')",
+            "SELECT park_area, fall_estimate, survey_comment, estimation_method FROM populations \
+WHERE population_year = ? AND species_name IN ('Bison', 'Deer', 'Elk', 'Moose')",
             (year,),
         )
     else:
         cur.execute(
-            "SELECT park_area, fall_estimate, survey_comment, estimation_method FROM populations WHERE population_year = ? AND species_name = ?",
+            "SELECT park_area, fall_estimate, survey_comment, estimation_method FROM populations \
+WHERE population_year = ? AND species_name = ?",
             (year, species),
         )
 
@@ -156,6 +167,7 @@ def show_year(cur: sqlite3.Cursor, year: int, species: str) -> int | None:
 
 
 def add(con: sqlite3.Connection, cur: sqlite3.Cursor) -> None:
+    """Add a new population data entry to the database using user-provided input."""
     try:
         population_year = int(input("Population year? "))
 
